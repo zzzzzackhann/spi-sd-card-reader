@@ -5,6 +5,7 @@ A bare-metal program that reads and writes to an SD card, with data transfer ver
 ## What I built
 
 - Firmware in bare-metal C (SPI, )
+- A template for debugging the SPI bus with a logic analyzer
 
 ## What I learned
 - SPI protocol
