@@ -1,4 +1,4 @@
-TARGET = SPI-01
+TARGET = SPI-02-RW
 
 CC      = arm-none-eabi-gcc
 OBJCOPY = arm-none-eabi-objcopy
