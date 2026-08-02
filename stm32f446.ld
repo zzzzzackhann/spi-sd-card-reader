@@ -27,7 +27,17 @@ SECTIONS
         . = ALIGN(4);
         *(.text)
         *(.text*)
+        *(.rodata) /* read-only data (const, string literals, tables) */
+        *(.rodata*)
+        *(.glue_7)
+        *(.glue_7t)
         . = ALIGN(4);
+        _etext = .;
+    } > FLASH
+
+    .ARM.exidx :
+    {
+        *(.ARM.exidx*)
     } > FLASH
 
     /* Initialized data */

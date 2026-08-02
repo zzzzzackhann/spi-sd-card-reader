@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "spi.c"
+#include "spi.h"
 
 
 uint8_t sd_command(uint8_t cmd, uint32_t arg, uint8_t crc, uint8_t *resp, uint8_t resp_len, uint8_t hold_cs) { // if hold_cs is 1, the CS must be set high manually after data transfer 
@@ -140,52 +140,52 @@ uint8_t sd_read_block(uint32_t block_addr, uint8_t *buffer) {
 }
 
 uint8_t sd_write_block(uint32_t block_addr, uint8_t *buffer) { // return of 0 = success
-        uint8_t r1[1];
+    uint8_t r1[1];
 
-        sd_command(24, block_addr, 0x01, r1, 1, 1); //WRITE_BLOCK, keep CS low...
-            #if DEBUG 
-                usart_send_string("CMD24 WRITE_BLOCK (should return 0x00): ");
-                usart_send_num(r1[0]);
-                usart_send_string("\n\r");
-            #endif
-        if(r1[0] != 0x00) {
-            cs_high();
-            return 1;
-        }
-
-
-        spi_transfer(0xFF); // send one dummy byte as a gap
-        spi_transfer(0xFE); // send a data token. write uses 0xFE
-
-        /* Read 512 bytes, plus the CRC bytes */
-        for (uint16_t i = 0; i < 512; i++) {
-            spi_transfer(buffer[i]); // send the data from the buffer to the card
-        }
-
-        spi_transfer(0xFF);
-        spi_transfer(0xFF);
-
-        /* Read data response byte and mask it with 0x1F. Response format is xxx0sss1, where bits 3:1 are status */
-        r1[0] = spi_transfer(0xFF) & 0x1F;
-
+    sd_command(24, block_addr, 0x01, r1, 1, 1); //WRITE_BLOCK, keep CS low...
         #if DEBUG 
-            if (r1[0] == 0x05) usart_send_string("Data response byte all good.");
+            usart_send_string("CMD24 WRITE_BLOCK (should return 0x00): ");
+            usart_send_num(r1[0]);
+            usart_send_string("\n\r");
         #endif
-
-        if (r1[0]!= 0x05) {
-            cs_high();
-            return 2;
-            #if DEBUG
-                if(r1[0] == 0x0B) usart_send_string("CRC Error in write function.");
-                if(r1[0] == 0x0D) usart_send_string("Write error in write function.");
-            #endif
-        }
-        
-        /* The card (MISO) reads 0x00 while it's writing, so wait until that's done and then raise the CS line*/
-        uint16_t timeout = 10000;
-        while (spi_transfer(0xFF) == 0x00 && --timeout);
-
+    if(r1[0] != 0x00) {
         cs_high();
+        return 1;
+    }
 
-        return 0;
+
+    spi_transfer(0xFF); // send one dummy byte as a gap
+    spi_transfer(0xFE); // send a data token. write uses 0xFE
+
+    /* Read 512 bytes, plus the CRC bytes */
+    for (uint16_t i = 0; i < 512; i++) {
+        spi_transfer(buffer[i]); // send the data from the buffer to the card
+    }
+
+    spi_transfer(0xFF);
+    spi_transfer(0xFF);
+
+    /* Read data response byte and mask it with 0x1F. Response format is xxx0sss1, where bits 3:1 are status */
+    r1[0] = spi_transfer(0xFF) & 0x1F;
+
+    #if DEBUG 
+        if (r1[0] == 0x05) usart_send_string("Data response byte all good.");
+    #endif
+
+    if (r1[0]!= 0x05) {
+        cs_high();
+        return 2;
+        #if DEBUG
+            if(r1[0] == 0x0B) usart_send_string("CRC Error in write function.");
+            if(r1[0] == 0x0D) usart_send_string("Write error in write function.");
+        #endif
+    }
+    
+    /* The card (MISO) reads 0x00 while it's writing, so wait until that's done and then raise the CS line*/
+    uint16_t timeout = 10000;
+    while (spi_transfer(0xFF) == 0x00 && --timeout);
+
+    cs_high();
+
+    return 0;
 }
