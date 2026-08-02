@@ -1,13 +1,17 @@
-TARGET = SPI-03-RW
+TARGET = SPI-04-FatFs
 
 CC      = arm-none-eabi-gcc
 OBJCOPY = arm-none-eabi-objcopy
 
-CFLAGS = -mcpu=cortex-m4 -mthumb -O0 -g -Wall
+# -I puts a folder in the "include" path for the compiler
+CFLAGS = -mcpu=cortex-m4 -mthumb -O0 -g -Wall -Iff16/source
 LDFLAGS = -T stm32f446.ld -nostartfiles
 
-SRCS = $(TARGET).c uart.c startup.s
+SRCS = $(TARGET).c uart.c startup.s \
+ff16/source/ff.c ff16/source/diskio.c \
+ff16/source/ffunicode.c
 
+# commands inside receipes are required to be indented
 $(TARGET).elf: $(SRCS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
